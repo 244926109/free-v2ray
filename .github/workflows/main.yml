@@ -6,27 +6,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  update:
+  sync:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Update Proxies using Script
+      - name: Download latest proxy files
         run: |
-          # 使用 Go 模块方式运行（推荐）
-          go run github.com/snakem982/proxypool@latest || echo "Direct run failed, trying alternative"
+          mkdir -p source
+          
+          echo "📥 Downloading v2ray nodes..."
+          curl -L -o source/v2ray-2.txt https://raw.githubusercontent.com/snakem982/proxypool/main/source/v2ray-2.txt
+          
+          echo "📥 Downloading Clash nodes..."
+          curl -L -o source/clash-meta-2.yaml https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml
+          
+          echo "📥 Downloading sing-box nodes..."
+          curl -L -o source/sing-box-2.json https://raw.githubusercontent.com/snakem982/proxypool/main/source/sing-box-2.json
+          
+          echo "✅ Update completed at $(date)"
 
-          # 如果上面失败，尝试直接拉取最新源文件（备用方案）
-          echo "Trying to update source files..."
-          curl -o source/v2ray-2.txt https://raw.githubusercontent.com/snakem982/proxypool/main/source/v2ray-2.txt || true
-          curl -o source/clash-meta-2.yaml https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml || true
-
-      - name: Commit and Push changes
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add source/ -f
-          git diff --staged --quiet || git commit -m "Update proxies $(date '+%Y-%m-%d %H:%M:%S')"
-          git push
+          git add source/
+          if git diff --staged --quiet; then
+            echo "No new changes"
+          else
+            git commit -m "Update proxies $(date '+%Y-%m-%d %H:%M:%S')"
+            git push
+          fi
