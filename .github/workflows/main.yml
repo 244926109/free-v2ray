@@ -2,8 +2,8 @@ name: Update ProxyPool
 
 on:
   schedule:
-    - cron: '15 0,6,12,18 * * *'     # 每天 8点、14点、20点、第二天2点左右更新（北京时间）
-  workflow_dispatch:                  # 允许手动触发
+    - cron: '15 0,6,12,18 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
@@ -18,14 +18,16 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Run ProxyPool Update
+      - name: Build and Run
         run: |
-          go run main.go   # 如果原项目入口不是 main.go，请改成正确的命令
+          go mod download
+          go build -o proxypool ./...
+          ./proxypool
 
-      - name: Commit and Push changes
+      - name: Commit and Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add source/
+          git add source/ -f
           git diff --staged --quiet || git commit -m "Update proxies $(date '+%Y-%m-%d %H:%M:%S')"
           git push
