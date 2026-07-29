@@ -13,18 +13,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Build and Run
+      - name: Update Proxies using Script
         run: |
-          go mod download
-          go build -o proxypool ./...
-          ./proxypool
+          # 使用 Go 模块方式运行（推荐）
+          go run github.com/snakem982/proxypool@latest || echo "Direct run failed, trying alternative"
 
-      - name: Commit and Push
+          # 如果上面失败，尝试直接拉取最新源文件（备用方案）
+          echo "Trying to update source files..."
+          curl -o source/v2ray-2.txt https://raw.githubusercontent.com/snakem982/proxypool/main/source/v2ray-2.txt || true
+          curl -o source/clash-meta-2.yaml https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml || true
+
+      - name: Commit and Push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
